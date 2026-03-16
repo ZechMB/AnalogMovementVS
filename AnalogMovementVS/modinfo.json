@@ -1,0 +1,16 @@
+{
+    "$schema": "https://moddbcdn.vintagestory.at/schema/modinfo.latest.json",
+    "type": "Code",
+    "modid": "analogmovementvs",
+    "name": "AnalogMovementVS",
+    "authors": [
+        "Zec"
+    ],
+    "website": "https://github.com/ZechMB/AnalogMovementVS",
+    "description": "Move in any direction.",
+    "version": "1.0.0",
+    "dependencies": {
+      "game": "1.21.6"
+    },
+    "side": "Universal"
+}

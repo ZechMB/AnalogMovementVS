@@ -1,0 +1,17 @@
+to create a new mod dependent on analogmovementvs:
+make new mod via Vintage Story template in Visual Studio
+right click solution->add existing project->analogmovementvs.csproj
+right click solution->project dependencies->make your mod depend on analogmovementvs
+right click your project's dependencies->add project reference->analogmovementvs
+add "using AnalogMovementVS;" to your modsystem
+change modinfo.json to include dependencies and side:
+	"dependencies": {
+	"game": "1.21.0",
+	"analogmovementvs": "*"
+	},
+	"side": "Client"
+
+to get debugging working:
+install analogmovementvs
+your project->dependencies->projects->analogmovementvs->copy local->no
+after trying to load a world it will freeze because of "just my code" popup
