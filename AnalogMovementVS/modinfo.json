@@ -8,7 +8,7 @@
     ],
     "website": "https://github.com/ZechMB/AnalogMovementVS",
     "description": "Move in any direction.",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "dependencies": {
       "game": "1.21.6"
     },
