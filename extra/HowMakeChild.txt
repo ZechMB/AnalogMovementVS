@@ -1,8 +1,17 @@
 to create a new mod dependent on analogmovementvs:
 make new mod via Vintage Story template in Visual Studio
+
+method 1:
 right click solution->add existing project->analogmovementvs.csproj
 right click solution->project dependencies->make your mod depend on analogmovementvs
 right click your project's dependencies->add project reference->analogmovementvs
+your project->dependencies->projects->analogmovementvs->copy local->no
+
+method 2(best):
+add analogmovementvs.dll as project reference
+dependencies->assemblies->right click analogmovementvs and change copy local to 'no'
+
+method 1&2 part2:
 add "using AnalogMovementVS;" to your modsystem
 change modinfo.json to include dependencies and side:
 	"dependencies": {
@@ -13,5 +22,23 @@ change modinfo.json to include dependencies and side:
 
 to get debugging working:
 install analogmovementvs
-your project->dependencies->projects->analogmovementvs->copy local->no
-after trying to load a world it will freeze because of "just my code" popup
+after trying to load a world it may freeze because of "just my code" popup
+
+
+coding:
+//call this every tick:
+if (capi.World.Player.Entity.Controls is EntityControlsAMfVS am && am.IsGameReadyForInput)
+{
+	//and use:
+	am.amForwardBackward = 0f;
+	am.amLeftRight = 0;
+	am.amSprint = false; //am.amJump = false; am.amSneak = false;
+}
+
+
+check EntityControlsAMfVS for all settings:
+https://github.com/ZechMB/AnalogMovementVS/blob/main/AnalogMovementVS/EntityControlsAMfVS.cs
+
+for examples check:
+https://github.com/ZechMB/WootingAnalogVS/blob/main/WootingAnalogVS/AnalogMovement.cs
+https://github.com/ZechMB/ControllerMovementVS/blob/main/ControllerMovementVS/AnalogMovement.cs
