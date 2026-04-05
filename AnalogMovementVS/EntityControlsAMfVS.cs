@@ -49,6 +49,10 @@ namespace AnalogMovementVS
             {
                 WalkVector.Set(0,0,0);
                 FlyVector.Set(0,0,0);
+                Forward = false;
+                Backward = false;
+                Left = false;
+                Right = false;
                 return;
             }
 
