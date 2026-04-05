@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
+using Vintagestory.Client;
 using Vintagestory.Client.NoObf;
 
 namespace AnalogMovementVS
@@ -74,9 +75,9 @@ namespace AnalogMovementVS
 
                 if (entityControls is EntityControlsAMfVS amcontrols)
                 {
-                    amcontrols.IsGameReadyForInput = flag2;
+                    amcontrols.IsMouseGrabbed = flag2;
 
-                    //optionally reenable the controls that were removed
+                    //reenable the controls that were removed and optionally disable them
                     if (amcontrols.EnableKeyboardBoolMovement)
                     {
                         amcontrols.amForwardBackward2 = (game.KeyboardState[forwardKey] ? 1 : 0) + (game.KeyboardState[backwardKey] ? -1 : 0);
@@ -88,9 +89,20 @@ namespace AnalogMovementVS
                         amcontrols.amSneak2 = game.KeyboardState[sneakKey] && flag2;
                         amcontrols.amSprint2 = (game.KeyboardState[sprintKey] || (amcontrols.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                     }
-                    amcontrols.Jump = amcontrols.amJump || amcontrols.amJump2;
-                    amcontrols.Sneak = amcontrols.amSneak || amcontrols.amSneak2;
-                    amcontrols.Sprint = amcontrols.amSprint || amcontrols.amSprint2;
+
+                    //disable jumpsneaksprint when tabbed out
+                    if (ScreenManager.Platform.IsFocused)
+                    {
+                        amcontrols.Jump = amcontrols.amJump || amcontrols.amJump2;
+                        amcontrols.Sneak = amcontrols.amSneak || amcontrols.amSneak2;
+                        amcontrols.Sprint = amcontrols.amSprint || amcontrols.amSprint2;
+                    }
+                    else
+                    {
+                        amcontrols.Jump = false;
+                        amcontrols.Sneak = false;
+                        amcontrols.Sprint = false;
+                    }
                 }
                 else
                 {

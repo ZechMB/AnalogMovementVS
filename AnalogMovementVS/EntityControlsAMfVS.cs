@@ -2,6 +2,7 @@
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
 using Vintagestory.API.Config;
+using Vintagestory.Client;
 
 namespace AnalogMovementVS
 {
@@ -16,8 +17,11 @@ namespace AnalogMovementVS
         //game won't considered you moving until you move this fast (0 to 1.0 float); you'll still move but won't animate or step up slabs
         public float MinSpeedForMovement = 0.15f;
 
-        //true if mouse is captured by game and not in a menu
-        public bool IsGameReadyForInput { get; internal set; } = false;
+        //should disable jump, sneak, & togglesprint when false
+        public bool IsMouseGrabbed { get; internal set; } = false;
+
+        [Obsolete("renamed to IsMouseGrabbed")]
+        public bool IsGameReadyForInput { get; internal set; } = true;
 
         //control movement along axis(-1.0 to 0 to 1.0 float)
         public float amForwardBackward = 0;
@@ -40,6 +44,14 @@ namespace AnalogMovementVS
 
         public override void CalcMovementVectors(EntityPos pos, float dt)
         {
+            //disable movement when tabbed out
+            if (!ScreenManager.Platform.IsFocused)
+            {
+                WalkVector.Set(0,0,0);
+                FlyVector.Set(0,0,0);
+                return;
+            }
+
             double moveSpeed = dt * GlobalConstants.BaseMoveSpeed * MovespeedMultiplier * GlobalConstants.OverallSpeedMultiplier;
 
             double dz = amForwardBackward + amForwardBackward2;
