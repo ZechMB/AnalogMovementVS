@@ -32,7 +32,6 @@ namespace AnalogMovementVS
                 var OpenedGuis = Traverse.Create(game).Field("OpenedGuis").GetValue<List<GuiDialog>>();
                 var player = Traverse.Create(game).Field("player").GetValue<ClientPlayer>();
                 var worlddata = Traverse.Create(player).Field("worlddata").GetValue<ClientWorldPlayerData>();
-                var nowFloorSitting = Traverse.Create(__instance).Field("nowFloorSitting").GetValue<bool>();
                 var prevControls = Traverse.Create(__instance).Field("prevControls").GetValue<EntityControls>();
 
                 var entityPlayer = game.EntityPlayer;
@@ -103,6 +102,12 @@ namespace AnalogMovementVS
                         amcontrols.Sneak = false;
                         amcontrols.Sprint = false;
                     }
+
+                    //floor sitting disabler
+                    if (amcontrols.WalkVector.X > 0 || amcontrols.WalkVector.Y > 0 || amcontrols.WalkVector.Z > 0 || amcontrols.amJump || amcontrols.amJump2)
+                    {
+                        Traverse.Create(__instance).Field("nowFloorSitting").SetValue(false);
+                    }
                 }
                 else
                 {
@@ -128,6 +133,7 @@ namespace AnalogMovementVS
                 entityControls.NoClip = worlddata.NoClip;
                 entityControls.LeftMouseDown = game.InWorldMouseState.Left;
                 entityControls.RightMouseDown = game.InWorldMouseState.Right;
+                var nowFloorSitting = Traverse.Create(__instance).Field("nowFloorSitting").GetValue<bool>();
                 entityControls.FloorSitting = nowFloorSitting;
                 Traverse.Create(__instance).Method("SendServerPackets", prevControls, entityControls).GetValue();
 
