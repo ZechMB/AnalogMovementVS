@@ -58,8 +58,7 @@ namespace AnalogMovementVS
                     continue;
                 }
 
-                //var controls = seat.controls;
-                //use player controls for movement but mount controls still exist to prevent a bug of the boat pushing you when you get out
+                //use player controls for movement but seat.controls still exist to prevent a bug of the boat pushing you when you get out
                 EntityControlsAMfVS? controls = null;                              
                 if (seat.Passenger is EntityPlayer eplr2)
                 {
@@ -116,7 +115,6 @@ namespace AnalogMovementVS
                     {
                         seat.Passenger.AnimManager.StartAnimation(__instance.MountAnimations["ready"]);
                     }
-                    continue;
                 }
                 else
                 {
@@ -132,13 +130,13 @@ namespace AnalogMovementVS
                     seat.Passenger.AnimManager?.StopAnimation(__instance.MountAnimations["ready"]);
                 }
                 
-                if (controls.Left || controls.Right)
+                if (controls.amLeftRight != 0 || controls.amLeftRight2 != 0)
                 {
                     float dir = controls.amLeftRight + controls.amLeftRight2;
                     angularMotion += str * dir * dt;
                 }
 
-                if (controls.Forward || controls.Backward)
+                if (controls.amForwardBackward != 0 || controls.amForwardBackward2 != 0)
                 {
                     float dir = controls.amForwardBackward + controls.amForwardBackward2;
 

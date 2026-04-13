@@ -199,7 +199,7 @@ namespace AnalogMovementVS
                     }
                 }
 
-                if (canturn && (amcontrols.Left || amcontrols.Right))
+                if (canturn && (amcontrols.amLeftRight != 0 || amcontrols.amLeftRight2 != 0))
                 {
                     float dir = amcontrols.amLeftRight + amcontrols.amLeftRight2;
                     angularMotion += (ebg.GetYawMultiplier() * dir * dt);
