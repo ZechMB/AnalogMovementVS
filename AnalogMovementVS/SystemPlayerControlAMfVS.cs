@@ -36,10 +36,9 @@ namespace AnalogMovementVS
 
                 var entityPlayer = game.EntityPlayer;
                 var entityControls = (entityPlayer.MountedOn == null) ? entityPlayer.Controls : entityPlayer.MountedOn.Controls;
-                if (entityControls == null)
-                {
-                    return false;
-                }
+                EntityControlsAMfVS? PlayerControls = null;
+                if (entityPlayer.Controls is EntityControlsAMfVS amcon) PlayerControls = amcon;
+                if (entityControls == null || PlayerControls == null) return false;
 
                 if (inputapi is not null)
                 {
@@ -70,8 +69,46 @@ namespace AnalogMovementVS
                 }
                 bool flag2 = flag;
 
-                if (entityControls is EntityControlsAMfVS amcontrols)
+                //mounts send controls to player except jumpsneaksprint needs to be forwarded to the mount controls
+                if (entityControls is EntityControlsMountAMfVS ammount)
                 {
+                    PlayerControls.IsMounted = true;
+                    PlayerControls.IsMouseGrabbed = flag2;
+
+                    if (PlayerControls.EnableKeyboardBoolMovement)
+                    {
+                        PlayerControls.amForwardBackward2 = (game.KeyboardState[forwardKey] ? 1 : 0) + (game.KeyboardState[backwardKey] ? -1 : 0);
+                        PlayerControls.amLeftRight2 = (game.KeyboardState[leftKey] ? 1 : 0) + (game.KeyboardState[rightKey] ? -1 : 0);
+                    }
+                    if (PlayerControls.EnableKeyboardJumpSneakSprint)
+                    {
+                        PlayerControls.amJump2 = game.KeyboardState[jumpKey] && flag2 && (game.EntityPlayer.PrevFrameCanStandUp || worlddata.NoClip);
+                        PlayerControls.amSneak2 = game.KeyboardState[sneakKey] && flag2;
+                        PlayerControls.amSprint2 = (game.KeyboardState[sprintKey] || (PlayerControls.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
+                    }
+
+                    if (ScreenManager.Platform.IsFocused)
+                    {
+                        PlayerControls.Jump = PlayerControls.amJump || PlayerControls.amJump2;
+                        PlayerControls.Sneak = PlayerControls.amSneak || PlayerControls.amSneak2;
+                        PlayerControls.Sprint = PlayerControls.amSprint || PlayerControls.amSprint2;
+                        ammount.Jump = PlayerControls.Jump;
+                        ammount.Sneak = PlayerControls.Sneak;
+                        ammount.Sprint = PlayerControls.Sprint;
+                    }
+                    else //disable jumpsneaksprint when tabbed out
+                    {
+                        PlayerControls.Jump = false;
+                        PlayerControls.Sneak = false;
+                        PlayerControls.Sprint = false;
+                        ammount.Jump = false;
+                        ammount.Sneak = false;
+                        ammount.Sprint = false;
+                    }
+                }
+                else if (entityControls is EntityControlsAMfVS amcontrols) //walking controls
+                {
+                    amcontrols.IsMounted = false;
                     amcontrols.IsMouseGrabbed = flag2;
 
                     //reenable the controls that were removed and optionally disable them
@@ -87,14 +124,13 @@ namespace AnalogMovementVS
                         amcontrols.amSprint2 = (game.KeyboardState[sprintKey] || (amcontrols.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                     }
 
-                    //disable jumpsneaksprint when tabbed out
                     if (ScreenManager.Platform.IsFocused)
                     {
                         amcontrols.Jump = amcontrols.amJump || amcontrols.amJump2;
                         amcontrols.Sneak = amcontrols.amSneak || amcontrols.amSneak2;
                         amcontrols.Sprint = amcontrols.amSprint || amcontrols.amSprint2;
                     }
-                    else
+                    else //disable jumpsneaksprint when tabbed out
                     {
                         amcontrols.Jump = false;
                         amcontrols.Sneak = false;
@@ -107,9 +143,8 @@ namespace AnalogMovementVS
                         Traverse.Create(__instance).Field("nowFloorSitting").SetValue(false);
                     }
                 }
-                else
+                else //use default controls for unsupported controllables
                 {
-                    //use default controls for mounts
                     entityControls.Forward = game.KeyboardState[forwardKey];
                     entityControls.Backward = game.KeyboardState[backwardKey];
                     entityControls.Left = game.KeyboardState[leftKey];
@@ -120,6 +155,7 @@ namespace AnalogMovementVS
                     entityControls.Sprint = (game.KeyboardState[sprintKey] || (sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                 }
 
+                //unmodified controls
                 entityControls.CtrlKey = game.KeyboardState[ctrlKey];
                 entityControls.ShiftKey = game.KeyboardState[shiftKey];
                 entityControls.DetachedMode = worlddata.FreeMove || game.EntityPlayer.IsEyesSubmerged();

@@ -17,6 +17,9 @@ namespace AnalogMovementVS
         //game won't considered you moving until you move this fast (0 to 1.0 float); you'll still move but won't animate or step up slabs
         public float MinSpeedForMovement = 0.15f;
 
+        //mounted on seat or saddle
+        public bool IsMounted { get; internal set; } = false;
+
         //should disable jump, sneak, & togglesprint when false
         public bool IsMouseGrabbed { get; internal set; } = false;
 
@@ -34,7 +37,7 @@ namespace AnalogMovementVS
         public bool amSneak = false;
         public bool amSprint = false;
 
-        //secondary controls for keyboard
+        //secondary controls for keyboard input while also using analog inputs
         internal int amForwardBackward2 = 0;
         internal int amLeftRight2 = 0;
         internal bool amJump2 = false;
@@ -99,6 +102,14 @@ namespace AnalogMovementVS
             if (FlyPlaneLock == EnumFreeMovAxisLock.X) { FlyVector.X = 0; }
             if (FlyPlaneLock == EnumFreeMovAxisLock.Y) { FlyVector.Y = 0; }
             if (FlyPlaneLock == EnumFreeMovAxisLock.Z) { FlyVector.Z = 0; }
+        }
+    }
+    //an extra class just so we can tell when we are mounted
+    public class EntityControlsMountAMfVS : EntityControlsAMfVS 
+    {
+        public EntityControlsMountAMfVS()
+        {
+            IsMounted = true;
         }
     }
 }

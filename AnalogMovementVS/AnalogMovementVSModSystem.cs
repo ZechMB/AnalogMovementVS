@@ -8,6 +8,7 @@ namespace AnalogMovementVS
         public override void Start(ICoreAPI api)
         {
             var harmony = new Harmony("AnalogMovementVS");
+            //Harmony.DEBUG = true;
             harmony.PatchAll();
         }
     }
