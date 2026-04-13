@@ -5,5 +5,6 @@ This does nothing on its own and needs a child mod.
 
 
 This mod overwrites SystemPlayerControl.OnGameTick() and replaces EntityControls for EntityPlayer.
+Update 1.1.0+ also overwrites EntityBehaviorRideable.SeatsToMotion, EntityBoat.SeatsToMotion, and replaces EntityControls for EntitySeat.
 
 [help with making a child mod](https://github.com/ZechMB/AnalogMovementVS/blob/main/extra/HowMakeChild.txt)
