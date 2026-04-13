@@ -28,7 +28,7 @@ namespace AnalogMovementVS
                 int shiftKey = Traverse.Create(__instance).Field("shiftKey").GetValue<int>();
 
                 var game = Traverse.Create(__instance).Field("game").GetValue<ClientMain>();
-                var inputapi = Traverse.Create(game).Field("inputapi").GetValue<InputAPI>();
+                var inputapi = Traverse.Create(game.api).Field("inputapi").GetValue<InputAPI>();
                 var OpenedGuis = Traverse.Create(game).Field("OpenedGuis").GetValue<List<GuiDialog>>();
                 var player = Traverse.Create(game).Field("player").GetValue<ClientPlayer>();
                 var worlddata = Traverse.Create(player).Field("worlddata").GetValue<ClientWorldPlayerData>();
@@ -41,8 +41,6 @@ namespace AnalogMovementVS
                     return false;
                 }
 
-                //game.EntityPlayer.Controls.OnAction = new OnEntityAction(inputapi.TriggerInWorldAction);
-                //i wouldn't be surprised if i broke whatever this does
                 if (inputapi is not null)
                 {
                     MethodInfo? triggerMethod = inputapi.GetType().GetMethod("TriggerInWorldAction", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
