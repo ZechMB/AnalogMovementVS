@@ -74,6 +74,7 @@ namespace AnalogMovementVS
                 {
                     PlayerControls.IsMounted = true;
                     PlayerControls.IsMouseGrabbed = flag2;
+                    entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
 
                     if (PlayerControls.EnableKeyboardBoolMovement)
                     {
@@ -110,6 +111,7 @@ namespace AnalogMovementVS
                 {
                     amcontrols.IsMounted = false;
                     amcontrols.IsMouseGrabbed = flag2;
+                    amcontrols.amIncomingMoveSpeed = worlddata.MoveSpeedMultiplier;
 
                     //reenable the controls that were removed and optionally disable them
                     if (amcontrols.EnableKeyboardBoolMovement)
@@ -145,6 +147,7 @@ namespace AnalogMovementVS
                 }
                 else //use default controls for unsupported controllables
                 {
+                    entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
                     entityControls.Forward = game.KeyboardState[forwardKey];
                     entityControls.Backward = game.KeyboardState[backwardKey];
                     entityControls.Left = game.KeyboardState[leftKey];
@@ -162,7 +165,6 @@ namespace AnalogMovementVS
                 entityControls.FlyPlaneLock = worlddata.FreeMovePlaneLock;
                 entityControls.Up = entityControls.DetachedMode && entityControls.Jump;
                 entityControls.Down = entityControls.DetachedMode && entityControls.Sneak;
-                entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
                 entityControls.IsFlying = worlddata.FreeMove;
                 entityControls.NoClip = worlddata.NoClip;
                 entityControls.LeftMouseDown = game.InWorldMouseState.Left;

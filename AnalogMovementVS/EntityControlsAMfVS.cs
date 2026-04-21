@@ -15,7 +15,7 @@ namespace AnalogMovementVS
         public bool EnableKeyboardJumpSneakSprint = true;
 
         //game won't considered you moving until you move this fast (0 to 1.0 float); you'll still move but won't animate or step up slabs
-        public float MinSpeedForMovement = 0.15f;
+        public float MinSpeedForMovement = 0.1f;
 
         //mounted on seat or saddle
         public bool IsMounted { get; internal set; } = false;
@@ -44,6 +44,9 @@ namespace AnalogMovementVS
         internal bool amSneak2 = false;
         internal bool amSprint2 = false;
 
+        //the speed set by SystemPlayerControl from WorldPlayerData
+        internal float amIncomingMoveSpeed = 1f;
+
 
         public override void CalcMovementVectors(EntityPos pos, float dt)
         {
@@ -59,13 +62,20 @@ namespace AnalogMovementVS
                 return;
             }
 
-            double moveSpeed = dt * GlobalConstants.BaseMoveSpeed * MovespeedMultiplier * GlobalConstants.OverallSpeedMultiplier;
-
+            double moveSpeed = dt * GlobalConstants.BaseMoveSpeed * amIncomingMoveSpeed * GlobalConstants.OverallSpeedMultiplier;
+            
             double dz = amForwardBackward + amForwardBackward2;
             double dx = amLeftRight + amLeftRight2;
+            dz = Math.Clamp(dz, -1, 1);
+            dx = Math.Clamp(dx, -1, 1);
 
-            dz = Math.Clamp(dz,-1,1);
-            dx = Math.Clamp(dx,-1,1);
+            float amMoveSpeed;
+            
+            if (dz == 0 && dx == 0) amMoveSpeed = 1f;
+            else if (Math.Abs(dz) > Math.Abs(dx)) amMoveSpeed = (float)dz;
+            else amMoveSpeed = (float)dx;
+            MovespeedMultiplier = amMoveSpeed * amIncomingMoveSpeed; //might cause speed changes to be behind ~1 tick but its fine
+
             if (dz > MinSpeedForMovement) Forward = true; else Forward = false;
             if (dz < -MinSpeedForMovement) Backward = true; else Backward = false;
             if (dx > MinSpeedForMovement) Left = true; else Left = false;
