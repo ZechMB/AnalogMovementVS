@@ -23,6 +23,9 @@ namespace AnalogMovementVS
         //should disable jump, sneak, & togglesprint when false
         public bool IsMouseGrabbed { get; internal set; } = false;
 
+        //aka GuiDialogEscapeMenu
+        public bool IsPauseMenuOpen { get; internal set; } = false;
+
         [Obsolete("renamed to IsMouseGrabbed")]
         public bool IsGameReadyForInput { get; internal set; } = true;
 
@@ -50,8 +53,8 @@ namespace AnalogMovementVS
 
         public override void CalcMovementVectors(EntityPos pos, float dt)
         {
-            //disable movement when tabbed out
-            if (!ScreenManager.Platform.IsFocused)
+            //disable movement when tabbed out or 'paused' in multiplayer
+            if (!ScreenManager.Platform.IsFocused || IsPauseMenuOpen)
             {
                 WalkVector.Set(0,0,0);
                 FlyVector.Set(0,0,0);

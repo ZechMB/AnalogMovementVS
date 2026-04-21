@@ -68,6 +68,7 @@ namespace AnalogMovementVS
                     flag = true;
                 }
                 bool flag2 = flag;
+                bool IsPauseMenuOpen = OpenedGuis.Any(gui => gui.GetType().Name == "GuiDialogEscapeMenu");
 
                 //mounts send controls to player except jumpsneaksprint needs to be forwarded to the mount controls
                 if (entityControls is EntityControlsMountAMfVS ammount)
@@ -75,6 +76,7 @@ namespace AnalogMovementVS
                     PlayerControls.IsMounted = true;
                     PlayerControls.IsMouseGrabbed = flag2;
                     entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
+                    PlayerControls.IsPauseMenuOpen = IsPauseMenuOpen;
 
                     if (PlayerControls.EnableKeyboardBoolMovement)
                     {
@@ -112,6 +114,7 @@ namespace AnalogMovementVS
                     amcontrols.IsMounted = false;
                     amcontrols.IsMouseGrabbed = flag2;
                     amcontrols.amIncomingMoveSpeed = worlddata.MoveSpeedMultiplier;
+                    amcontrols.IsPauseMenuOpen = IsPauseMenuOpen;
 
                     //reenable the controls that were removed and optionally disable them
                     if (amcontrols.EnableKeyboardBoolMovement)
@@ -126,13 +129,13 @@ namespace AnalogMovementVS
                         amcontrols.amSprint2 = (game.KeyboardState[sprintKey] || (amcontrols.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                     }
 
-                    if (ScreenManager.Platform.IsFocused)
+                    if (ScreenManager.Platform.IsFocused || !IsPauseMenuOpen)
                     {
                         amcontrols.Jump = amcontrols.amJump || amcontrols.amJump2;
                         amcontrols.Sneak = amcontrols.amSneak || amcontrols.amSneak2;
                         amcontrols.Sprint = amcontrols.amSprint || amcontrols.amSprint2;
                     }
-                    else //disable jumpsneaksprint when tabbed out
+                    else //disable jumpsneaksprint when tabbed out or 'paused' in multiplayer
                     {
                         amcontrols.Jump = false;
                         amcontrols.Sneak = false;
