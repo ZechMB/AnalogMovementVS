@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using System;
-using System.Linq;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -13,7 +12,7 @@ namespace AnalogMovementVS
     class EntityBehaviorRideablePatch
     {
         //1.22 switches return value to double for just the turning
-        public static bool Prefix(EntityBehaviorRideable __instance, ref Vec2d __result, float dt)
+        public static bool Prefix(EntityBehaviorRideable __instance, ref double __result, float dt)
         {
             var coyoteTimer = Traverse.Create(__instance).Field("coyoteTimer").GetValue<float>();
             var capi = Traverse.Create(__instance).Field("capi").GetValue<ICoreClientAPI>();
@@ -23,10 +22,8 @@ namespace AnalogMovementVS
             var api = Traverse.Create(__instance).Field("api").GetValue<ICoreAPI>();
             var angularMotionWild = Traverse.Create(__instance).Field("angularMotionWild").GetValue<float>();
 
-            double linearMotion = 0;
-            double angularMotion = 0;
-
             Traverse.Create(__instance).Field("jumpNow").SetValue(false);
+            double angularMotion = 0;
             coyoteTimer -= dt;
 
             __instance.Controller = null;
@@ -90,7 +87,7 @@ namespace AnalogMovementVS
                 var canRideDelegate = canRideField.GetValue(__instance) as MulticastDelegate;
                 if (canRideDelegate != null && (controls.Jump || controls.TriesToMove))
                 {
-                    foreach (CanRideDelegate dele in canRideDelegate.GetInvocationList().Cast<CanRideDelegate>())
+                    foreach (CanRideDelegate dele in canRideDelegate.GetInvocationList())
                     {
                         if (!dele(seat, out string? errMsg))
                         {
@@ -108,7 +105,7 @@ namespace AnalogMovementVS
                 var canTurnDelegate = canTurnField.GetValue(__instance) as MulticastDelegate;
                 if (canTurnDelegate != null && (controls.Left || controls.Right))
                 {
-                    foreach (CanRideDelegate dele in canTurnDelegate.GetInvocationList().Cast<CanRideDelegate>())
+                    foreach (CanRideDelegate dele in canTurnDelegate.GetInvocationList())
                     {
                         if (!dele(seat, out string? errMsg))
                         {
@@ -121,99 +118,89 @@ namespace AnalogMovementVS
                         }
                     }
                 }
-                
+
                 if (!canride) continue;
- 
-                if (amcontrols.Jump && __instance.entity.World.ElapsedMilliseconds - lastJumpMs > 1500L && __instance.entity.Alive && (__instance.entity.OnGround || coyoteTimer > 0f || (api.Side == EnumAppSide.Client && __instance.entity.EntityId != __instance.Controller.EntityId)))
+
+
+                if (controls.Jump && __instance.entity.World.ElapsedMilliseconds - lastJumpMs > 1500 && __instance.entity.Alive && 
+                    (__instance.entity.OnGround || coyoteTimer > 0 || (__instance.entity.Api.Side == EnumAppSide.Client && __instance.entity.EntityId != __instance.Controller.EntityId)))
                 {
                     lastJumpMs = __instance.entity.World.ElapsedMilliseconds;
                     Traverse.Create(__instance).Field("jumpNow").SetValue(true);
                 }
 
-                var CurrentGait = Traverse.Create(__instance).Field("CurrentGait").GetValue<GaitMeta>();
-                if (scheme != EnumControlScheme.Hold || amcontrols.TriesToMove || CurrentGait != ebg.IdleGait)
+                if (__instance.entity.Api.Side != EnumAppSide.Server)
                 {
-                    if (api.Side != EnumAppSide.Server)
+                    var prevForwardKey = Traverse.Create(__instance).Field("prevForwardKey").GetValue<bool>();
+                    var prevBackwardKey = Traverse.Create(__instance).Field("prevBackwardKey").GetValue<bool>();
+                    var prevSprintKey = Traverse.Create(__instance).Field("prevSprintKey").GetValue<bool>();
+                    var prevPrevForwardKey = Traverse.Create(__instance).Field("prevPrevForwardKey").GetValue<bool>();
+                    var prevPrevBackwardKey = Traverse.Create(__instance).Field("prevPrevBackwardKey").GetValue<bool>();
+                    var prevPrevSprintKey = Traverse.Create(__instance).Field("prevPrevSprintKey").GetValue<bool>();
+
+                    bool forward = amcontrols.Forward;
+                    bool backward = amcontrols.Backward;
+                    bool sprint = controls.Sprint;
+
+                    bool wasIdle = ebg.IsIdle;
+
+                    if (forward && !prevForwardKey && !prevPrevForwardKey)
                     {
-                        var prevForwardKey = Traverse.Create(__instance).Field("prevForwardKey").GetValue<bool>();
-                        var prevBackwardKey = Traverse.Create(__instance).Field("prevBackwardKey").GetValue<bool>();
-                        var prevSprintKey = Traverse.Create(__instance).Field("prevSprintKey").GetValue<bool>();
-                        var prevPrevForwardsKey = Traverse.Create(__instance).Field("prevPrevForwardsKey").GetValue<bool>();
-                        var prevPrevBackwardsKey = Traverse.Create(__instance).Field("prevPrevBackwardsKey").GetValue<bool>();
-                        //var prevPrevSprintKey = Traverse.Create(__instance).Field("prevPrevSprintKey").GetValue<bool>(); //for 1.22
-                        long lastGaitChangeMs = 0;
-                        var onlyTwoGaits = Traverse.Create(__instance).Field("onlyTwoGaits").GetValue<bool>();
-                        
+                        __instance.SpeedUp(false);
+                    }
 
-                        bool forward = amcontrols.Forward;
-                        bool backward = amcontrols.Backward;
-                        bool sprint = controls.Sprint;
-                        bool ShouldSprint = sprint && !prevSprintKey;
-                        Traverse.Create(__instance).Field("prevSprintKey").SetValue(sprint);
-                        bool ShouldStopSprint = backward && !prevBackwardKey && !prevPrevBackwardsKey;
-                        long elapsedMilliseconds = __instance.entity.World.ElapsedMilliseconds;
+                    if (backward && !prevBackwardKey && !prevPrevBackwardKey)
+                    {
+                        __instance.SlowDown();
+                    }
 
-                        if (scheme == EnumControlScheme.Press && !onlyTwoGaits)
-                        {
-                            Traverse.Create(__instance).Field("prevSprintKey").SetValue(false);
-                        }
-                        
-                        if (forward && !prevForwardKey)
-                        {
-                            if (ebg.IsIdleGait(CurrentGait) && !prevPrevForwardsKey)
-                            {
-                                __instance.SpeedUp();
-                                Traverse.Create(__instance).Field("lastGaitChangeMs").SetValue(elapsedMilliseconds);
-                            }
-                            else if (ebg.IsBackwards(CurrentGait))
-                            {
-                                Traverse.Create(__instance).Field("CurrentGait").SetValue(ebg.IdleGait);
-                                Traverse.Create(__instance).Field("lastGaitChangeMs").SetValue(elapsedMilliseconds);
-                            }
-                        }
-                        CurrentGait = Traverse.Create(__instance).Field("CurrentGait").GetValue<GaitMeta>();
-                        if (scheme == EnumControlScheme.Hold && ((!forward && ebg.IsForwards(CurrentGait)) || (!backward && ebg.IsBackwards(CurrentGait))))
-                        {
-                            Traverse.Create(__instance).Field("CurrentGait").SetValue(ebg.IdleGait);
-                            Traverse.Create(__instance).Field("lastGaitChangeMs").SetValue(elapsedMilliseconds);
-                        }
-                        lastGaitChangeMs = Traverse.Create(__instance).Field("lastGaitChangeMs").GetValue<long>();
-                        CurrentGait = Traverse.Create(__instance).Field("CurrentGait").GetValue<GaitMeta>();
-                        if (ShouldSprint && ebg.IsForwards(CurrentGait) && elapsedMilliseconds - lastGaitChangeMs > 300L)
-                        {
-                            __instance.SpeedUp();
-                            Traverse.Create(__instance).Field("lastGaitChangeMs").SetValue(elapsedMilliseconds);
-                        }
-                        lastGaitChangeMs = Traverse.Create(__instance).Field("lastGaitChangeMs").GetValue<long>();
-                        if ((ShouldStopSprint || (!sprint && CurrentGait.IsSprint && scheme == EnumControlScheme.Hold)) && elapsedMilliseconds - lastGaitChangeMs > 300L)
+                    if (sprint && (wasIdle || (!prevSprintKey && !prevPrevSprintKey)))
+                    {
+                        if (ebg.CurrentGait.HasForwardMotion) __instance.SpeedUp(true);
+                        else if (ebg.CurrentGait.HasBackwardMotion) __instance.SlowDown();
+                    }
+
+                    if (scheme == EnumControlScheme.Hold)
+                    {
+                        var IsSprinting = Traverse.Create(__instance).Method("IsSprinting").GetValue<bool>();
+                        if (IsSprinting && !sprint)
                         {
                             __instance.SlowDown();
-                            Traverse.Create(__instance).Field("lastGaitChangeMs").SetValue(elapsedMilliseconds);
                         }
-                        Traverse.Create(__instance).Field("prevPrevForwardsKey").SetValue(prevForwardKey);
-                        Traverse.Create(__instance).Field("prevPrevBackwardsKey").SetValue(prevBackwardKey);
-                        bool temp = scheme == EnumControlScheme.Press && forward;
-                        Traverse.Create(__instance).Field("prevForwardKey").SetValue(temp);
-                        temp = scheme == EnumControlScheme.Press && backward;
-                        Traverse.Create(__instance).Field("prevBackwardKey").SetValue(temp);
+                        if ((!forward && !backward && !ebg.IsIdle)
+                            || (!forward && ebg.CurrentGait.HasForwardMotion)
+                            || (!backward && ebg.CurrentGait.HasBackwardMotion))
+                        {
+                            ebg.SetIdle();
+                        }
+                        if (forward && !backward && !ebg.CurrentGait.HasForwardMotion)
+                        {
+                            __instance.SpeedUp(false);
+                        }
+                        if (backward && !forward && !ebg.CurrentGait.HasBackwardMotion)
+                        {
+                            __instance.SlowDown();
+                        }
                     }
+
+                    Traverse.Create(__instance).Field("prevPrevForwardsKey").SetValue(prevForwardKey);
+                    Traverse.Create(__instance).Field("prevPrevBackwardsKey").SetValue(prevBackwardKey);
+                    Traverse.Create(__instance).Field("prevPrevSprintKey").SetValue(prevSprintKey);
+                    Traverse.Create(__instance).Field("prevForwardKey").SetValue(forward);
+                    Traverse.Create(__instance).Field("prevBackwardKey").SetValue(backward);
+                    Traverse.Create(__instance).Field("prevSprintKey").SetValue(sprint);
                 }
 
+                #region Motion update
                 if (canturn && (amcontrols.amLeftRight != 0 || amcontrols.amLeftRight2 != 0))
                 {
                     float dir = amcontrols.amLeftRight + amcontrols.amLeftRight2;
-                    angularMotion += (ebg.GetYawMultiplier() * dir * dt);
+                    angularMotion += ebg.GetYawMultiplier() * dir * dt;
                 }
-                var CurrentGait2 = Traverse.Create(__instance).Field("CurrentGait").GetValue<GaitMeta>();
-                if (ebg.IsForwards(CurrentGait2) || ebg.IsBackwards(CurrentGait2))
-                {
-                    //float dir = amcontrols.amForwardBackward + amcontrols.amForwardBackward2;
-                    //CurrentGait2.MoveSpeed = 2; //maybe try adding later
-                    float dir = ebg.IsForwards(CurrentGait2) ? 1 : -1;
-                    linearMotion += (dir * dt * 2f);
-                }
+                #endregion
             }
-            __result = new Vec2d(linearMotion, angularMotion);
+
+            __result = angularMotion;
             return false;
         }
     }

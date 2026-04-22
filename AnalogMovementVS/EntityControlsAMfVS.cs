@@ -26,9 +26,6 @@ namespace AnalogMovementVS
         //aka GuiDialogEscapeMenu
         public bool IsPauseMenuOpen { get; internal set; } = false;
 
-        [Obsolete("renamed to IsMouseGrabbed")]
-        public bool IsGameReadyForInput { get; internal set; } = true;
-
         //control movement along axis(-1.0 to 0 to 1.0 float)
         public float amForwardBackward = 0;
 
