@@ -70,14 +70,13 @@ namespace AnalogMovementVS
                 bool flag2 = flag;
                 bool IsPauseMenuOpen = OpenedGuis.Any(gui => gui.GetType().Name == "GuiDialogEscapeMenu");
 
-                //mounts send controls to player but also jumpsneaksprint needs to be forwarded to the mount controls
-                if (entityControls is EntityControlsMountAMfVS ammount)
+                //controls for both walking and mounted
+                if (entityControls is EntityControlsAMfVS)
                 {
-                    PlayerControls.IsMounted = true;
                     PlayerControls.IsMouseGrabbed = flag2;
-                    entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
                     PlayerControls.IsPauseMenuOpen = IsPauseMenuOpen;
 
+                    //optionally reenable the keyboard controls that were removed
                     if (PlayerControls.EnableKeyboardBoolMovement)
                     {
                         PlayerControls.amForwardBackward2 = (game.KeyboardState[forwardKey] ? 1 : 0) + (game.KeyboardState[backwardKey] ? -1 : 0);
@@ -90,65 +89,68 @@ namespace AnalogMovementVS
                         PlayerControls.amSprint2 = (game.KeyboardState[sprintKey] || (PlayerControls.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                     }
 
-                    if (ScreenManager.Platform.IsFocused)
+                    //disable jumpsneaksprint when tabbed out or 'paused' in multiplayer
+                    if (ScreenManager.Platform.IsFocused || !IsPauseMenuOpen)
                     {
                         PlayerControls.Jump = PlayerControls.amJump || PlayerControls.amJump2;
                         PlayerControls.Sneak = PlayerControls.amSneak || PlayerControls.amSneak2;
                         PlayerControls.Sprint = PlayerControls.amSprint || PlayerControls.amSprint2;
-                        ammount.Jump = PlayerControls.Jump;
-                        ammount.Sneak = PlayerControls.Sneak;
-                        ammount.Sprint = PlayerControls.Sprint;
                     }
-                    else //disable jumpsneaksprint when tabbed out
+                    else
                     {
                         PlayerControls.Jump = false;
                         PlayerControls.Sneak = false;
                         PlayerControls.Sprint = false;
-                        ammount.Jump = false;
-                        ammount.Sneak = false;
-                        ammount.Sprint = false;
+                    }
+
+                    //mouse click inputs
+                    if (PlayerControls.LeftMouse && !PlayerControls.PrevLeftMouse)
+                    {
+                        PlayerControls.PrevLeftMouse = true;
+                        game.UpdateMouseButtonState(EnumMouseButton.Left, true);
+                    }
+                    else if (!PlayerControls.LeftMouse && PlayerControls.PrevLeftMouse)
+                    {
+                        PlayerControls.PrevLeftMouse = false;
+                        game.UpdateMouseButtonState(EnumMouseButton.Left, false);
+                    }
+
+                    if (PlayerControls.RightMouse && !PlayerControls.PrevRightMouse)
+                    {
+                        PlayerControls.PrevRightMouse = true;
+                        game.UpdateMouseButtonState(EnumMouseButton.Right, true);
+                    }
+                    else if (!PlayerControls.RightMouse && PlayerControls.PrevRightMouse)
+                    {
+                        PlayerControls.PrevRightMouse = false;
+                        game.UpdateMouseButtonState(EnumMouseButton.Right, false);
+                    }
+
+
+                    //items specific to mounted or walking
+                    if (entityControls is EntityControlsMountAMfVS ammount) //mounted
+                    {
+                        PlayerControls.IsMounted = true;
+                        entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
+
+                        //jumpsneaksprint needs to be forwarded to the mount controls
+                        ammount.Jump = PlayerControls.Jump;
+                        ammount.Sneak = PlayerControls.Sneak;
+                        ammount.Sprint = PlayerControls.Sprint;
+                    }
+                    else //walking
+                    {
+                        PlayerControls.IsMounted = false;
+                        PlayerControls.amIncomingMoveSpeed = worlddata.MoveSpeedMultiplier;
+
+                        //floor sitting disabler
+                        if (PlayerControls.WalkVector.X > 0 || PlayerControls.WalkVector.Y > 0 || PlayerControls.WalkVector.Z > 0 || PlayerControls.amJump || PlayerControls.amJump2)
+                        {
+                            Traverse.Create(__instance).Field("nowFloorSitting").SetValue(false);
+                        }
                     }
                 }
-                else if (entityControls is EntityControlsAMfVS amcontrols) //walking controls
-                {
-                    amcontrols.IsMounted = false;
-                    amcontrols.IsMouseGrabbed = flag2;
-                    amcontrols.amIncomingMoveSpeed = worlddata.MoveSpeedMultiplier;
-                    amcontrols.IsPauseMenuOpen = IsPauseMenuOpen;
-
-                    //reenable the controls that were removed and optionally disable them
-                    if (amcontrols.EnableKeyboardBoolMovement)
-                    {
-                        amcontrols.amForwardBackward2 = (game.KeyboardState[forwardKey] ? 1 : 0) + (game.KeyboardState[backwardKey] ? -1 : 0);
-                        amcontrols.amLeftRight2 = (game.KeyboardState[leftKey] ? 1 : 0) + (game.KeyboardState[rightKey] ? -1 : 0);
-                    }
-                    if (amcontrols.EnableKeyboardJumpSneakSprint)
-                    {
-                        amcontrols.amJump2 = game.KeyboardState[jumpKey] && flag2 && (game.EntityPlayer.PrevFrameCanStandUp || worlddata.NoClip);
-                        amcontrols.amSneak2 = game.KeyboardState[sneakKey] && flag2;
-                        amcontrols.amSprint2 = (game.KeyboardState[sprintKey] || (amcontrols.Sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
-                    }
-
-                    if (ScreenManager.Platform.IsFocused || !IsPauseMenuOpen)
-                    {
-                        amcontrols.Jump = amcontrols.amJump || amcontrols.amJump2;
-                        amcontrols.Sneak = amcontrols.amSneak || amcontrols.amSneak2;
-                        amcontrols.Sprint = amcontrols.amSprint || amcontrols.amSprint2;
-                    }
-                    else //disable jumpsneaksprint when tabbed out or 'paused' in multiplayer
-                    {
-                        amcontrols.Jump = false;
-                        amcontrols.Sneak = false;
-                        amcontrols.Sprint = false;
-                    }
-
-                    //floor sitting disabler
-                    if (amcontrols.WalkVector.X > 0 || amcontrols.WalkVector.Y > 0 || amcontrols.WalkVector.Z > 0 || amcontrols.amJump || amcontrols.amJump2)
-                    {
-                        Traverse.Create(__instance).Field("nowFloorSitting").SetValue(false);
-                    }
-                }
-                else //use default controls for unsupported controllables
+                else //use default keyboard controls for unsupported controllables
                 {
                     entityControls.MovespeedMultiplier = worlddata.MoveSpeedMultiplier;
                     entityControls.Forward = game.KeyboardState[forwardKey];
@@ -161,33 +163,9 @@ namespace AnalogMovementVS
                     entityControls.Sprint = (game.KeyboardState[sprintKey] || (sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                 }
 
-                //left mouse control input
-                if (PlayerControls.LeftMouse && !PlayerControls.PrevLeftMouse)
-                {
-                    PlayerControls.PrevLeftMouse = true;
-                    game.UpdateMouseButtonState(EnumMouseButton.Left, true);
-                }
-                else if (!PlayerControls.LeftMouse && PlayerControls.PrevLeftMouse)
-                {
-                    PlayerControls.PrevLeftMouse = false;
-                    game.UpdateMouseButtonState(EnumMouseButton.Left, false);
-                }
-
-                //right mouse control input
-                if (PlayerControls.RightMouse && !PlayerControls.PrevRightMouse)
-                {
-                    PlayerControls.PrevRightMouse = true;
-                    game.UpdateMouseButtonState(EnumMouseButton.Right, true);
-                }
-                else if (!PlayerControls.RightMouse && PlayerControls.PrevRightMouse)
-                {
-                    PlayerControls.PrevRightMouse = false;
-                    game.UpdateMouseButtonState(EnumMouseButton.Right, false);
-                }
-
 
                 //unmodified controls
-                entityControls.CtrlKey = game.KeyboardState[ctrlKey];
+                entityControls.CtrlKey = game.KeyboardState[ctrlKey]; //might need to do ctrl shift
                 entityControls.ShiftKey = game.KeyboardState[shiftKey];
                 entityControls.DetachedMode = worlddata.FreeMove || game.EntityPlayer.IsEyesSubmerged();
                 entityControls.FlyPlaneLock = worlddata.FreeMovePlaneLock;
@@ -195,7 +173,7 @@ namespace AnalogMovementVS
                 entityControls.Down = entityControls.DetachedMode && entityControls.Sneak;
                 entityControls.IsFlying = worlddata.FreeMove;
                 entityControls.NoClip = worlddata.NoClip;
-                entityControls.LeftMouseDown = game.InWorldMouseState.Left; //this is just for animation control
+                entityControls.LeftMouseDown = game.InWorldMouseState.Left;
                 entityControls.RightMouseDown = game.InWorldMouseState.Right;
                 var nowFloorSitting = Traverse.Create(__instance).Field("nowFloorSitting").GetValue<bool>();
                 entityControls.FloorSitting = nowFloorSitting;
