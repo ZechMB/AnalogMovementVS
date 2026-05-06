@@ -70,7 +70,7 @@ namespace AnalogMovementVS
                 bool flag2 = flag;
                 bool IsPauseMenuOpen = OpenedGuis.Any(gui => gui.GetType().Name == "GuiDialogEscapeMenu");
 
-                //mounts send controls to player except jumpsneaksprint needs to be forwarded to the mount controls
+                //mounts send controls to player but also jumpsneaksprint needs to be forwarded to the mount controls
                 if (entityControls is EntityControlsMountAMfVS ammount)
                 {
                     PlayerControls.IsMounted = true;
@@ -161,6 +161,31 @@ namespace AnalogMovementVS
                     entityControls.Sprint = (game.KeyboardState[sprintKey] || (sprint && entityControls.TriesToMove && ClientSettings.ToggleSprint)) && flag2;
                 }
 
+                //left mouse control input
+                if (PlayerControls.LeftMouse && !PlayerControls.PrevLeftMouse)
+                {
+                    PlayerControls.PrevLeftMouse = true;
+                    game.UpdateMouseButtonState(EnumMouseButton.Left, true);
+                }
+                else if (!PlayerControls.LeftMouse && PlayerControls.PrevLeftMouse)
+                {
+                    PlayerControls.PrevLeftMouse = false;
+                    game.UpdateMouseButtonState(EnumMouseButton.Left, false);
+                }
+
+                //right mouse control input
+                if (PlayerControls.RightMouse && !PlayerControls.PrevRightMouse)
+                {
+                    PlayerControls.PrevRightMouse = true;
+                    game.UpdateMouseButtonState(EnumMouseButton.Right, true);
+                }
+                else if (!PlayerControls.RightMouse && PlayerControls.PrevRightMouse)
+                {
+                    PlayerControls.PrevRightMouse = false;
+                    game.UpdateMouseButtonState(EnumMouseButton.Right, false);
+                }
+
+
                 //unmodified controls
                 entityControls.CtrlKey = game.KeyboardState[ctrlKey];
                 entityControls.ShiftKey = game.KeyboardState[shiftKey];
@@ -170,7 +195,7 @@ namespace AnalogMovementVS
                 entityControls.Down = entityControls.DetachedMode && entityControls.Sneak;
                 entityControls.IsFlying = worlddata.FreeMove;
                 entityControls.NoClip = worlddata.NoClip;
-                entityControls.LeftMouseDown = game.InWorldMouseState.Left;
+                entityControls.LeftMouseDown = game.InWorldMouseState.Left; //this is just for animation control
                 entityControls.RightMouseDown = game.InWorldMouseState.Right;
                 var nowFloorSitting = Traverse.Create(__instance).Field("nowFloorSitting").GetValue<bool>();
                 entityControls.FloorSitting = nowFloorSitting;

@@ -26,6 +26,12 @@ namespace AnalogMovementVS
         //aka GuiDialogEscapeMenu
         public bool IsPauseMenuOpen { get; internal set; } = false;
 
+        //left mouse input via ClientMain.UpdateMouseButtonState
+        public bool LeftMouse = false;
+
+        //right mouse input
+        public bool RightMouse = false;
+
         //control movement along axis(-1.0 to 0 to 1.0 float)
         public float amForwardBackward = 0;
 
@@ -36,6 +42,10 @@ namespace AnalogMovementVS
         public bool amJump = false;
         public bool amSneak = false;
         public bool amSprint = false;
+
+        //internal for checking if a press just started
+        internal bool PrevLeftMouse = false;
+        internal bool PrevRightMouse = false;
 
         //secondary controls for keyboard input while also using analog inputs
         internal int amForwardBackward2 = 0;
