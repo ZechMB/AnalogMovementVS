@@ -137,6 +137,12 @@ namespace AnalogMovementVS
                         ammount.Jump = PlayerControls.Jump;
                         ammount.Sneak = PlayerControls.Sneak;
                         ammount.Sprint = PlayerControls.Sprint;
+
+                        //forward the rest of the controls in case another mod is using them
+                        ammount.Forward = PlayerControls.Forward;
+                        ammount.Backward = PlayerControls.Backward;
+                        ammount.Left = PlayerControls.Left;
+                        ammount.Right = PlayerControls.Right;
                     }
                     else //walking
                     {
